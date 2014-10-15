@@ -11,8 +11,8 @@ def squar_it(ip):
 	return ip*ip
 
 import httplib2
-import socks
-from helpers import provider_exceptions,db
+
+from helpers import provider_exceptions,db,socks
 import json
 import urllib
 from datetime import datetime
