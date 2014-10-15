@@ -2,6 +2,7 @@
 #Date: 2014-08-26
 #Description: Provider function modules
 
+#CONFIG_FILE="D:/repo/dist_it_env/env/dist_it/dist_it/provider_modules/parveen/parveen_config.ini"
 CONFIG_FILE="parveen_config.ini"
 DEFAULT_SECTION="dev"
 
@@ -15,7 +16,7 @@ from helpers import provider_exceptions,db
 import json
 import urllib
 from datetime import datetime
-  
+import os
 class Parveen_API:
 	def __init__(self,section):
 		try:
@@ -23,12 +24,18 @@ class Parveen_API:
 			global CONFIG_FILE			
 			self.section=section
 			self.config=ConfigParser.ConfigParser()
-			self.config.read(CONFIG_FILE)
+			
+
+			#print os.path.dirname(os.path.abspath(__file__))
+			#print os.getcwd()
 			#print "sections",self.config.sections()			
+			path =  os.path.join(os.path.dirname(os.path.abspath(__file__)),CONFIG_FILE)
+			self.config.read(path)
 			if not (section in self.config.sections()):
 				raise Exception("Section "+section+" not Found !")
 			self.loaded=True			
 		except Exception as ex:
+			print ex
 			self.loaded=False
 			self.loading_error=str(ex)
 
@@ -237,13 +244,32 @@ class Parveen_API:
 				fare_ss=0
 				fare_st=0
 				fare_sl=0
+				service_tax=0
+				service_tax_amt=0
+				list_service_tax=[]
 				for fare_type in schedule["fares"]:					
+					service_tax_amt = int(fare_type["serviceTax"])
 					if fare_type["seatType"] 	== "SS":
-						fare_ss = fare_type["fare"]
+						fare_ss = int(fare_type["fare"])
+						if fare_ss>0:
+							list_service_tax.append(service_tax_amt*100.0/fare_ss)
+							fare_ss+=service_tax_amt
+
 					elif fare_type["seatType"] 	== "ST":
-						fare_st = fare_type["fare"]		
+						fare_st = int(fare_type["fare"])
+						if fare_st>0:
+							list_service_tax.append(service_tax_amt*100.0/fare_st)
+							fare_st+=service_tax_amt
+
 					if fare_type["seatType"] 	== "SL" or fare_type["seatType"]=="LSL" or  fare_type["seatType"]=="USL":
-						fare_sl = fare_type["fare"]
+						fare_sl = int(fare_type["fare"])
+						if fare_sl>0:
+							list_service_tax.append(service_tax_amt*100.0/fare_sl)
+							fare_sl+=service_tax_amt
+										
+				if len(list_service_tax)>0:
+					service_tax=max(list_service_tax)
+					service_tax=round(service_tax,2)
 
 				route_code=str(from_city_id)+'~'+str(to_city_id)+'~'+journey_date+'~'+str(schedule["scheduleId"]) #TODO
 				route=(from_city_id
@@ -260,7 +286,8 @@ class Parveen_API:
 					, schedule["scheduleId"]
 					, str(fare_sl)
 					, str(fare_ss)
-					, str(fare_st)					
+					, str(fare_st)	
+					, str(service_tax)				
 					,route_code
 					)
 
@@ -330,9 +357,10 @@ class Parveen_API:
 											,fare_sl
 											,fare_ss
 											,fare_st
+											,service_tax
 											,route_code
 										)
-							VALUES	(%d,%d,%s,%d,%s,%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s)
+							VALUES	(%d,%d,%s,%d,%s,%s,%d,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s)
 						""",list_routes)
 				except Exception as ex:
 					raise Exception("Exception while pushing routes in db: "+str(ex))
@@ -473,7 +501,10 @@ def get_routes(process_id,from_city_id,to_city_id,journey_date):
 		return api.process_routes(process_id,from_city_id,to_city_id,jd,response)
 	except Exception as e:		
 		raise provider_exceptions.Process_Exc(str(e))		
-
+def test_me():
+	a=Parveen_API("dev")
+	print __file__	
+	print "Done"
 
 if __name__== "__main__":
 	#print 
@@ -503,5 +534,5 @@ if __name__== "__main__":
 
 	#get_to_cities(14,"Bangalore",42)
 	a=Parveen_API("dev")
-	print 
+	print __file__
 	pass

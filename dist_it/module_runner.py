@@ -37,8 +37,9 @@ def run(module_name,fun_name,args,log_fun):
 		for attr in fun_name.split("."):
 			fun = getattr(parent_module,attr)
 			parent_module=fun				
-		###
-		sys.stdout=StreamDirecter(log_fun)						
+
+		###		
+		sys.stdout=StreamDirecter(log_fun)								
 		result=fun(**args)
 		sys.stdout=stdout
 		###
@@ -60,7 +61,8 @@ def run(module_name,fun_name,args,log_fun):
 #print run("test_module","squar_it",{"ip":2})
 def fun_temp(data):
 	pass
-#run("test.test_module","squar_it",{"ip":2},fun_temp)
+#print "running"
+#run("parveen.parveen_api","test_me",{},fun_temp)
 #run("parveen.parveen_pull","Waiter.callback",{},fun_temp)
 
 
