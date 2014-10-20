@@ -12,8 +12,8 @@ import parveen_api
 NAME ="PARVEEN_PULL"
 PROVIDER_ID=56
 
-PRIMARY_BULK_SIZE=15
-SECONDARY_BULK_SIZE=15
+PRIMARY_BULK_SIZE=1
+SECONDARY_BULK_SIZE=0
 SECONDARY_BULK_COUNT=2
 def start_pull(process_id,jd_from,jd_to):
 	"""
@@ -116,8 +116,8 @@ if __name__=='__main__':
 	print "Phase-1: From=%s, To=%s" % (jd_from.strftime("%Y-%m-%d"),jd_to.strftime("%Y-%m-%d"))	
 	process_id = util_fun.get_process_id(PROVIDER_ID)	
 	print "PROCESS_ID=%d" % (process_id,)
-	#start_pull(process_id,jd_from,jd_to)	
-	#process_data(process_id=process_id)	
+	start_pull(process_id,jd_from,jd_to)	
+	process_data(process_id=process_id)	
 
 	curr_secondary_counter=datetime.now().day % SECONDARY_BULK_COUNT
 	jd_from=jd_to+timedelta(days=1+SECONDARY_BULK_SIZE*curr_secondary_counter)
@@ -125,5 +125,5 @@ if __name__=='__main__':
 	print "Phase-1: From=%s, To=%s" % (jd_from.strftime("%Y-%m-%d"),jd_to.strftime("%Y-%m-%d"))	
 	process_id = util_fun.get_process_id(PROVIDER_ID)	
 	print "PROCESS_ID=%d" % (process_id,)
-	#start_pull(process_id,jd_from,jd_to)	
-	#process_data(process_id=process_id)	
+	start_pull(process_id,jd_from,jd_to)	
+	process_data(process_id=process_id)	
