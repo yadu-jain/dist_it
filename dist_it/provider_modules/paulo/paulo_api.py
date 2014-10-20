@@ -301,7 +301,7 @@ class Paulo_API:
 	def process_data(self,process_id):
 		pulldb_config = self.__get_pulldb_config__()
 		pulldb=db.DB( *pulldb_config )
-		return pulldb.execute_sp("PROCESS_DATA",(process_id,))
+		return pulldb.execute_sp("PROCESS_DATA",(process_id,),commit=True)
 
 ##--------------------------Class Paulo_API Ends------------------------
 		

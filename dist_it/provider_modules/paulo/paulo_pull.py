@@ -68,8 +68,8 @@ if __name__=='__main__':
 	print "Phase-1: From=%s, To=%s" % (jd_from.strftime("%Y-%m-%d"),jd_to.strftime("%Y-%m-%d"))	
 	process_id = util_fun.get_process_id(PROVIDER_ID)	
 	print "PROCESS_ID=%d" % (process_id,)
-	#start_pull(process_id,jd_from,jd_to)	
-	#process_data(process_id=46252770)	
+	start_pull(process_id,jd_from,jd_to)	
+	process_data(process_id=process_id)	
 
 	curr_secondary_counter=datetime.now().day % SECONDARY_BULK_COUNT
 	jd_from=jd_to+timedelta(days=1+SECONDARY_BULK_SIZE*curr_secondary_counter)
@@ -77,8 +77,8 @@ if __name__=='__main__':
 	print "Phase-1: From=%s, To=%s" % (jd_from.strftime("%Y-%m-%d"),jd_to.strftime("%Y-%m-%d"))	
 	process_id = util_fun.get_process_id(PROVIDER_ID)	
 	print "PROCESS_ID=%d" % (process_id,)
-	#start_pull(process_id,jd_from,jd_to)	
-	#process_data(process_id=46252770)	
+	start_pull(process_id,jd_from,jd_to)	
+	process_data(process_id=process_id)	
 
 	##----------Debug------------------------------------------###
 	#print paulo_api.get_routes(12345,"WAI","VPI","2014-10-21")
