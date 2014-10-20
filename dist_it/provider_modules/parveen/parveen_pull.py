@@ -1,16 +1,21 @@
 ##Author: Heera
 ##Creted: 2014-09-14
 ##Description: creates jobs for Parveen pull 
-from helpers import jobs
+from helpers import jobs,util_fun
 from datetime import datetime,timedelta
-import parveen_api
 import time
+import parveen_api
+
 
 ##Parveen pull configuration
-NO_DAYS_TO_PULL=30
+
 NAME ="PARVEEN_PULL"
 PROVIDER_ID=56
-def start_pull(process_id):
+
+PRIMARY_BULK_SIZE=15
+SECONDARY_BULK_SIZE=15
+SECONDARY_BULK_COUNT=2
+def start_pull(process_id,jd_from,jd_to):
 	"""
 		Starting Point for pull
 	"""
@@ -19,10 +24,10 @@ def start_pull(process_id):
 	start_pulling_to_cities(process_id = process_id,response = response)
 	print "pullling routes"		
 	response_city_pairs = parveen_api.get_city_pairs_to_pull(process_id=process_id)	
-	start_pulling_routes(process_id=process_id,response=response_city_pairs)
-	print "processing data"
-	process_data(process_id=process_id)	
-	print "Completed"
+	start_pulling_routes(process_id=process_id,
+		jd_from=jd_from,
+		jd_to=jd_to,
+		response=response_city_pairs)	
 
 def start_pulling_to_cities(process_id,response=None):		
 
@@ -46,30 +51,22 @@ def start_pulling_to_cities(process_id,response=None):
 	del manager
 
 
-def start_pulling_routes(process_id,response=None):
+def start_pulling_routes(process_id,jd_from,jd_to,response=None):
 	print "start pulling routes"
 	manager=jobs.JobsManager()
-	city_pairs=[(city_pair["from_city_id"],city_pair["to_city_id"]) for city_pair in response]
-	
-	from_date=datetime.now()+timedelta(days=0) # "2014-09-03"#datetime.strptime("2014-08-30","%Y-%m-%d")
-	to_date=from_date+timedelta(days=NO_DAYS_TO_PULL)	
-	dt=from_date
+	city_pairs=[(city_pair["from_city_id"],city_pair["to_city_id"]) for city_pair in response]		
+	dt=jd_from
 	route_list=[]
 	waiter=jobs.JobsWaiter(manager,process_id)
-	while dt<=to_date:
+	while dt<=jd_to:
 		for city_pair in city_pairs:
 			route_list.append((city_pair[0],city_pair[1],dt.strftime("%Y-%m-%d")))
 		dt=dt+timedelta(days=1)		
 	
 	for route in route_list:
-		job=("parveen.parveen_api","get_routes",{"process_id":process_id,"from_city_id":route[0],"to_city_id":route[1],"journey_date":route[2]})
-		#manager.add_job(job,
-			# callback_list=[waiter.get_callback_job()])				
-
+		job=("parveen.parveen_api","get_routes",{"process_id":process_id,"from_city_id":route[0],"to_city_id":route[1],"journey_date":route[2]})	
 		waiter.add_job(job)
-
-	#wait_for_jobs(job_list,status_obj,key)			
-	waiter.wait(timeout=3*60*60)	
+	waiter.wait(timeout=3*60*60)	## Max 3 hours 
 	del manager
 
 def process_data(process_id,response=None):
@@ -110,12 +107,23 @@ def test_ram_shyam():
 ###------------------------------------------------------------------------------------------------------####
 
 
-
 if __name__=='__main__':
-	
 	print NAME
 	print "PROVIDER_ID=%d" % (PROVIDER_ID,)
+
+	jd_from=datetime.now()+timedelta(days=1)
+	jd_to=jd_from+timedelta(days=PRIMARY_BULK_SIZE-1)	
+	print "Phase-1: From=%s, To=%s" % (jd_from.strftime("%Y-%m-%d"),jd_to.strftime("%Y-%m-%d"))	
 	process_id = util_fun.get_process_id(PROVIDER_ID)	
 	print "PROCESS_ID=%d" % (process_id,)
-	start_pull(process_id)	
-	process_data(process_data)	
+	#start_pull(process_id,jd_from,jd_to)	
+	#process_data(process_id=process_id)	
+
+	curr_secondary_counter=datetime.now().day % SECONDARY_BULK_COUNT
+	jd_from=jd_to+timedelta(days=1+SECONDARY_BULK_SIZE*curr_secondary_counter)
+	jd_to=jd_from+timedelta(days=SECONDARY_BULK_SIZE-1)	
+	print "Phase-1: From=%s, To=%s" % (jd_from.strftime("%Y-%m-%d"),jd_to.strftime("%Y-%m-%d"))	
+	process_id = util_fun.get_process_id(PROVIDER_ID)	
+	print "PROCESS_ID=%d" % (process_id,)
+	#start_pull(process_id,jd_from,jd_to)	
+	#process_data(process_id=process_id)	
