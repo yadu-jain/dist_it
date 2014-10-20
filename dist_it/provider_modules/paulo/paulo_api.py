@@ -2,24 +2,18 @@
 #Date: 2014-08-26
 #Description: Provider function modules
 
-CONFIG_FILE="D:/repo/scripts/puller/provider_modules/paulo/paulo.ini"
+CONFIG_FILE="paulo.ini"
 DEFAULT_SECTION="dev"
 
 
 def squar_it(ip):
 	return ip*ip
 
-import httplib2
-import socks
-from helpers import provider_exceptions,db
-import json
-import urllib
+from helpers import provider_exceptions,db,socks
+import httplib2,json,urllib,xmltodict,re,time,os  
 from datetime import datetime
 from suds.client import Client
-import xmltodict
-import re
-import time
-  
+
 class Paulo_API:
 	def __init__(self,section):
 		try:
@@ -27,8 +21,8 @@ class Paulo_API:
 			global CONFIG_FILE			
 			self.section=section
 			self.config=ConfigParser.ConfigParser()
-			self.config.read(CONFIG_FILE)
-			#print "sections",self.config.sections()			
+			path =  os.path.join(os.path.dirname(os.path.abspath(__file__)),CONFIG_FILE)
+			self.config.read(path)			
 			if not (section in self.config.sections()):
 				raise Exception("Section "+section+" not Found !")
 			self.loaded=True			
@@ -229,7 +223,7 @@ class Paulo_API:
 		"""		
 		try:
 			response = xmltodict.parse(str_response)
-			print json.dumps(response,indent=4)
+			#print json.dumps(response,indent=4)
 		except Exception as ex:
 			raise Exception("Invalid XML response")
 			
@@ -303,6 +297,12 @@ class Paulo_API:
 			return raw_response
 		else:
 			raise Exception("response code="+str(response_code))
+
+	def process_data(self,process_id):
+		pulldb_config = self.__get_pulldb_config__()
+		pulldb=db.DB( *pulldb_config )
+		return pulldb.execute_sp("PROCESS_DATA",(process_id,))
+
 ##--------------------------Class Paulo_API Ends------------------------
 		
 def get_response(str_api_name,*args,**kwrds):
@@ -358,7 +358,7 @@ def get_cities(process_id):
 		response=api.pull_cities()		
 	except Exception as e:
 		raise provider_exceptions.Pull_Exc(str(e))	
-	print response
+	#print response
 	try:
 		if response!=None:
 			return api.process_cities(process_id,response)
@@ -381,8 +381,7 @@ def get_city_pairs_to_pull(process_id):
 
 def get_routes(process_id,from_city_id,to_city_id,journey_date):
 	##TEMP
-	time.sleep(0.01)
-	return
+	time.sleep(0.01)	
 	##
 	global DEFAULT_SECTION
 	api=Paulo_API(DEFAULT_SECTION)
@@ -392,10 +391,11 @@ def get_routes(process_id,from_city_id,to_city_id,journey_date):
 
 	jd = datetime.strptime(journey_date,"%Y-%m-%d")
 	str_journey_date=datetime.strftime(jd,"%d-%m-%Y")
-
+	print str_journey_date
 	##Pulling Data
 	try:
 		response=api.pull_routes(process_id, from_city_id,to_city_id,str_journey_date)		
+		print json.dumps(response,indent=4)
 	except Exception as e:
 		raise provider_exceptions.Pull_Exc(str(e))
 		
@@ -404,6 +404,19 @@ def get_routes(process_id,from_city_id,to_city_id,journey_date):
 		return api.process_routes(process_id,from_city_id,to_city_id,jd,response)
 	except Exception as e:		
 		raise provider_exceptions.Process_Exc(str(e))		
+
+def process_data(process_id):
+	global DEFAULT_SECTION
+	print "Processing data=%d" % (process_id,)
+	api=Paulo_API(DEFAULT_SECTION)
+	if api.loaded==False:
+		raise provider_exceptions.Config_Load_Exc(api.loading_error)
+
+	##calling stored procedure to process data
+	try:		
+		return api.process_data(process_id)
+	except Exception as e:
+		raise provider_exceptions.Process_Exc(str(e))	
 
 if __name__== "__main__":	
 	#print get_city_pairs(1)

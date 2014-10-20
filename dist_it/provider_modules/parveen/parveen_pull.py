@@ -5,11 +5,12 @@ from helpers import jobs
 from datetime import datetime,timedelta
 import parveen_api
 import time
-##Parveen pull configuration
-NO_DAYS_TO_PULL=0
-NAME ="PARVEEN_PULL"
 
-def start_pull(process_id,response=None):
+##Parveen pull configuration
+NO_DAYS_TO_PULL=30
+NAME ="PARVEEN_PULL"
+PROVIDER_ID=56
+def start_pull(process_id):
 	"""
 		Starting Point for pull
 	"""
@@ -23,8 +24,7 @@ def start_pull(process_id,response=None):
 	process_data(process_id=process_id)	
 	print "Completed"
 
-def start_pulling_to_cities(process_id,response=None):	
-	#print "starting pulling to cities"
+def start_pulling_to_cities(process_id,response=None):		
 
 	manager=jobs.JobsManager()
 	
@@ -37,18 +37,11 @@ def start_pulling_to_cities(process_id,response=None):
 
 	waiter=jobs.JobsWaiter(manager,process_id)		
 	for from_city in from_city_list:
-		job=("parveen.parveen_api","get_to_cities",{"process_id":process_id,"from_city_name":from_city[0],"from_city_id":from_city[1]})
-		# manager.add_job(job,
-		# 	#callback_list=[])				
-		# 	callback_list=[waiter.get_callback_job()])				
-
+		job=("parveen.parveen_api","get_to_cities",{"process_id":process_id,"from_city_name":from_city[0],"from_city_id":from_city[1]})		
 		waiter.add_job(job)
 
-	print "waiting for jobs to complete"
-	#wait_for_jobs(job_list,status_obj,key)	
+	print "waiting for jobs to complete"	
 	waiter.wait(timeout=30*60)
-	
-	#manager.add_job(("parveen.parveen_api","get_city_pairs_to_pull",{"process_id":process_id}),[("parveen.parveen_pull","start_pulling_routes",{"process_id":process_id})])		
 	print "to cities done"
 	del manager
 
@@ -83,7 +76,7 @@ def process_data(process_id,response=None):
 	"""
 		End Point to process pulled data into gdsdb
 	""" 
-	pass
+	parveen_api.process_data(process_id=process_id)
 
 
 
@@ -120,10 +113,9 @@ def test_ram_shyam():
 
 if __name__=='__main__':
 	
-	start_pull(124)
-	#test_ram_shyam()
-
-	#new_callback_test()
-	##start_pulling_to_cities_test(43862472)
-	#check_callbacks()
-	#test_api(22)
+	print NAME
+	print "PROVIDER_ID=%d" % (PROVIDER_ID,)
+	process_id = util_fun.get_process_id(PROVIDER_ID)	
+	print "PROCESS_ID=%d" % (process_id,)
+	start_pull(process_id)	
+	process_data(process_data)	
