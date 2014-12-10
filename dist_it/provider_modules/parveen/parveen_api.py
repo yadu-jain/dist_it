@@ -421,6 +421,10 @@ class Parveen_API:
 		else:
 			raise Exception("Invalid response")			
 
+	def process_data(self,process_id):
+		pulldb_config = self.__get_pulldb_config__()
+		pulldb=db.DB( *pulldb_config )
+		return pulldb.execute_sp("PROCESS_DATA",(process_id,),commit=True)
 ##--------------------------Class Parveen_API Ends------------------------
 
 
@@ -501,6 +505,20 @@ def get_routes(process_id,from_city_id,to_city_id,journey_date):
 		return api.process_routes(process_id,from_city_id,to_city_id,jd,response)
 	except Exception as e:		
 		raise provider_exceptions.Process_Exc(str(e))		
+
+def process_data(process_id):
+	global DEFAULT_SECTION
+	print "Processing data=%d" % (process_id,)
+	api=Parveen_API(DEFAULT_SECTION)
+	if api.loaded==False:
+		raise provider_exceptions.Config_Load_Exc(api.loading_error)
+
+	##calling stored procedure to process data
+	try:		
+		return api.process_data(process_id)
+	except Exception as e:
+		raise provider_exceptions.Process_Exc(str(e))	
+
 def test_me():
 	a=Parveen_API("dev")
 	print __file__	
@@ -533,6 +551,7 @@ if __name__== "__main__":
 	# get_routes(20,46,43,"2014-09-06")
 
 	#get_to_cities(14,"Bangalore",42)
-	a=Parveen_API("dev")
-	print __file__
+	#a=Parveen_API("dev")
+	print process_data(46249871)
+	#print __file__
 	pass

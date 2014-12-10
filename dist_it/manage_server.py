@@ -14,7 +14,7 @@ import sys, traceback
 
 AUTHKEY= "60c05c632a2822a0a877c7e991602543"
 PORTNUM = 8004 #Preffered port
-IP='127.0.0.1'
+IP="10.66.60.90" #'127.0.0.1'
 
 LOG_FLUSH_TIMEOUT=60*5 # Seconds
 LOG_BUFFER_SIZE=10
@@ -319,7 +319,7 @@ def logs_sink(shared_logger_q):
 				if curr_buff >= LOG_BUFFER_SIZE or diff.total_seconds() > LOG_FLUSH_TIMEOUT:
 					file_name="log_"+log_time.strftime("%Y_%m_%d_%H_%M") +".txt"
 					last_flushed=log_time
-					flush_log(str(logs_buffer),file_name)
+					#flush_log(str(logs_buffer),file_name)
 					last_flushed=datetime.now()
 					curr_buff=0
 				time.sleep(0.01)
