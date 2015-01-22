@@ -3,9 +3,8 @@
 #Description: Provider function modules
 
 import httplib2
-from helpers import provider_exceptions,db
+from helpers import provider_exceptions,db,socks
 import urllib
-import socks
 import json
 from datetime import datetime
 import os
