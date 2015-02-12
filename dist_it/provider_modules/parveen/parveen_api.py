@@ -69,7 +69,11 @@ class Parveen_API:
 		password		= self.get_config("password")
 		stations_path	= self.get_config("stations_path")
 
-		h = httplib2.Http(proxy_info = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, proxy_ip, proxy_port))
+		h=None
+		if int(use_proxy)==1:
+			h = httplib2.Http(proxy_info = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, proxy_ip, proxy_port))
+		else:
+			h = httplib2.Http()
 		path = main_url \
 				+ stations_path \
 				+ '&email=' + email \
@@ -129,7 +133,11 @@ class Parveen_API:
 		password		= self.get_config("password")
 		to_cities_path	= self.get_config("to_cities_path")
 
-		h = httplib2.Http(proxy_info = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, proxy_ip, proxy_port))
+		h=None
+		if int(use_proxy)==1:
+			h = httplib2.Http(proxy_info = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, proxy_ip, proxy_port))
+		else:
+			h = httplib2.Http()
 		
 		path = main_url \
 				+ str(from_city_id) + "/" \
@@ -205,7 +213,11 @@ class Parveen_API:
 		password		= self.get_config("password")
 		routes_path		= self.get_config("routes_path")
 
-		h = httplib2.Http(proxy_info = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, proxy_ip, proxy_port))
+		h=None
+		if int(use_proxy)==1:
+			h = httplib2.Http(proxy_info = httplib2.ProxyInfo(socks.PROXY_TYPE_HTTP, proxy_ip, proxy_port))
+		else:
+			h = httplib2.Http()
 		
 		path = main_url \
 				+ routes_path \
