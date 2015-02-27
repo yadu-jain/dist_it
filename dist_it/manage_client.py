@@ -15,7 +15,7 @@ import json
 from json import JSONEncoder
 AUTHKEY= "60c05c632a2822a0a877c7e991602543"
 PORTNUM = 8004 #Preffered port
-PRODUCER_IP="10.66.60.90"#'127.0.0.1'
+PRODUCER_IP='127.0.0.1'#"10.66.60.90"
 
 CLIENT_NAME=socket.gethostname()
 CONSUMER_NAME="MEEPO"

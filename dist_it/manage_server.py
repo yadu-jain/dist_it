@@ -14,12 +14,12 @@ import sys, traceback
 
 AUTHKEY= "60c05c632a2822a0a877c7e991602543"
 PORTNUM = 8004 #Preffered port
-IP="10.66.60.90" #'127.0.0.1'
+IP='127.0.0.1' #"10.66.60.90"
 
 LOG_FLUSH_TIMEOUT=60*5 # Seconds
 LOG_BUFFER_SIZE=10
 DEFAULT_POOL_CONFIG={"pool_size":0}
-LOG_DIR="D:\Pull_logs"
+LOG_DIR="/home/swarthi/projects/dist_it_env/env/dist_it/Pull_logs"
 class JobsManager(SyncManager):
 	pass
 
@@ -109,18 +109,19 @@ class ClientProxies:
 		else:
 			raise Exception("Invalid job !")
 		self.job_q.put(job)				
-		req=job		
+		
+		job=(job[0],job[1],OrderedDict(sorted(job[2].items())))
 		for callback_job in  callback_list:
-			if type(req)==tuple:				
-				if len(req)==2:
-					req.add({})			
+			if type(job)==tuple:				
+				if len(job)==2:
+					job.add({})			
 				if len(callback_job)==2:
 					callback_job.add({})			
 				if len(callback_job)==0:
 					raise Exception("Invalid callbacks !")
 				else:
-					self.callbacks_dict[pickle.dumps(req)]=callback_job
-					req=callback_job
+					self.callbacks_dict[pickle.dumps(job)]=callback_job
+					job=callback_job
 			else:
 				raise Exception("Invalid callbacks !")
 
