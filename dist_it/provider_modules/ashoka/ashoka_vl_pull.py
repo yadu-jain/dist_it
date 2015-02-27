@@ -61,7 +61,8 @@ def start_pulling_routes(process_id,response=None):
 	to_date=from_date+timedelta(days=NO_DAYS_TO_PULL)	
 	dt=from_date
 	route_list=[]
-	waiter=jobs.JobsWaiter(manager,process_id)
+	name = "routes-"+str(process_id)
+	waiter=jobs.JobsWaiter(manager,name)
 	while dt<=to_date:
 		for city_pair in city_pairs:
 			route_list.append((city_pair[0],city_pair[1],dt.strftime("%Y-%m-%d")))
@@ -72,9 +73,7 @@ def start_pulling_routes(process_id,response=None):
 		# manager.add_job(job,
 			# callback_list=[waiter.get_callback_job()])				
 		waiter.add_job(job)
-	print "waiting jobs"
 	waiter.wait(timeout=3*60*60)	
-	print "waiting came out"
 	del manager
 
 def start_pulling_pickups(process_id,response):
@@ -84,7 +83,8 @@ def start_pulling_pickups(process_id,response):
 		raise Exception("no result from get route codes")
 	
 	# job_list=set()
-	waiter=jobs.JobsWaiter(manager,process_id)
+	name = "pickups-"+str(process_id)
+	waiter=jobs.JobsWaiter(manager,name)
 	for route_code in response:
 		job=("ashoka.ashoka_vl_api","get_pickups",{"process_id":process_id,"route_code":route_code["route_code"]})
 		# manager.add_job(job,
@@ -101,7 +101,8 @@ def start_pulling_dropoffs(process_id,response):
 		raise Exception("no result from get route codes")
 	
 	# job_list=set()
-	waiter=jobs.JobsWaiter(manager,process_id)
+	name = "dropoffs-"+str(process_id)
+	waiter=jobs.JobsWaiter(manager,name)
 	for route_code in response:
 		job=("ashoka.ashoka_vl_api","get_dropoffs",{"process_id":process_id,"route_code":route_code["route_code"]})
 		# manager.add_job(job,

@@ -864,8 +864,8 @@ def get_response(str_api_name,*args,**kwrds):
 		raise Exception("No Such API Method !")
 
 if __name__== "__main__":
-	# vl = AshokaVL_API(DEFAULT_SECTION)
-	# print json.dumps(xmltodict.parse(vl.pull_from_cities()),indent=4)
+	vl = AshokaVL_API(DEFAULT_SECTION)
+	print json.dumps(xmltodict.parse(vl.pull_from_cities()),indent=4)
 	# print json.dumps(vl.process_from_cities(0,vl.pull_from_cities()),indent=4)
 	# print json.dumps(xmltodict.parse(vl.pull_to_cities("1")),indent=4)
 	# print json.dumps(vl.process_to_cities(0,"11","Calicut",vl.pull_to_cities("11")),indent=4)
@@ -890,7 +890,7 @@ if __name__== "__main__":
 	# print json.dumps(get_city_pairs(1),indent=4)
 	# print json.dumps(get_routes(0,"10","1","2015-01-20"),indent=4)
 	# print json.dumps(get_route_codes(1),indent=4)
-	print json.dumps(get_pickups(53327030,"7~BNG-KNR007~2~1~9~2/6/2015"),indent=4)
+	# print json.dumps(get_pickups(53327030,"7~BNG-KNR007~2~1~9~2/6/2015"),indent=4)
 	# print json.dumps(get_pickups(1,"7~BNG-KNR007~1~3~1/21/2015"),indent=4)
 	# print json.dumps(get_dropoffs(1,"1~BNG-KNR001~1~2~1/21/2015"),indent=4)
 

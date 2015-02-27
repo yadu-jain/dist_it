@@ -1624,14 +1624,14 @@ if object_id('ATA_Process_Charts') IS NULL
 go
 --SELECT MAX(PROCESS_ID) FROM SEARCH_RESULT
 --EXEC PROCESS_CHARTS 525919,'25-3-4-5'
-alter procedure ATA_Process_Charts
+ALTER PROCEDURE [dbo].[ATA_Process_Charts](
 	@PROCESS_ID INT,
 	@PROCESS_ROUTE_CODE VARCHAR(50) = ''
-AS
+)AS
 BEGIN
 	SET NOCOUNT ON;
 
-		insert into sp_status_log(
+	insert into sp_status_log(
     	sp_name,
 		process_id,
 		spid,
@@ -1924,13 +1924,10 @@ BEGIN
 	END
 	CLOSE CUR
 	DEALLOCATE CUR
-	
-	PRINT 'STARTING GDS CHART PROCESS : ' + @PROCESS_ROUTE_CODE
-	--CALL THE GDS_PROCEDURE TO PROCESS THE CHARTS
-	EXEC  GDSDB.GDS.DBO._PROCESS_CHARTS @PROCESS_ID, 0, 1  --(pass process_id, find_deck, re_process-layout)
-	
 
-		insert into sp_status_log(
+	EXEC  GDSDB.GDS.DBO._PROCESS_CHARTS @PROCESS_ID, 0, 1  --(pass process_id, find_deck, re_process-layout)
+
+	insert into sp_status_log(
     	sp_name,
 		process_id,
 		spid,
@@ -1944,5 +1941,4 @@ BEGIN
 		, dateadd(MI,690,current_timestamp)
 		, 'c'
 	from master..sysprocesses sp where sp.spid = @@spid
-	PRINT 'COMPLETED'
 END
