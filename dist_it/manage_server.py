@@ -11,6 +11,7 @@ import time
 import os
 import pickle
 import sys, traceback
+import server_db
 
 AUTHKEY= "60c05c632a2822a0a877c7e991602543"
 PORTNUM = 8004 #Preffered port
@@ -24,7 +25,7 @@ class JobsManager(SyncManager):
 	pass
 
 
-def callback_handler(callbacks,shared_result_q,shared_logger_q):
+def callback_handler(callbacks,shared_result_q,shared_logger_q,):
 	print "recieving callbacks"
 	while True:
 		try:
@@ -38,6 +39,7 @@ def callback_handler(callbacks,shared_result_q,shared_logger_q):
 			break
 
 def default_callback(response,shared_logger_q):
+
 	if response["success"]==False:		
 		shared_logger_q.put_nowait(response)
 
@@ -70,13 +72,14 @@ class CallBacks(object):
 class ClientProxies:
 
 	def __init__(self):
-		self.job_q = mp.Queue()
+		self.job_q = mp.Queue()		
+		#self.job_q = server_db.Persistant_Queue()		
 		self.result_q = mp.Queue()
 		self.logger_q = mp.Queue()
 		self.pools={}
 		self.callbacks_dict ={}
 		self.sync_data={}
-		self.waiters={}
+		self.waiters={}		
 #		self.manager=None
 
 	def __get_default_pool_config__(self):
@@ -90,8 +93,12 @@ class ClientProxies:
 
 	def get_logger_q(self):
 		return self.logger_q
+
 	def get_sync_data(self):
 		return self.sync_data
+
+	def get_server_db(self):
+		return server_db.Jobs_Persistance()		
 
 	def get_pool_config(self,id):	
 		#return self.manager==None		
@@ -108,9 +115,9 @@ class ClientProxies:
 				raise Exception("Invalid job !")
 		else:
 			raise Exception("Invalid job !")
-		self.job_q.put(job)				
+		main_job=job
 		
-		job=(job[0],job[1],OrderedDict(sorted(job[2].items())))
+		#job=(job[0],job[1],OrderedDict(sorted(job[2].items())))
 		for callback_job in  callback_list:
 			if type(job)==tuple:				
 				if len(job)==2:
@@ -124,6 +131,7 @@ class ClientProxies:
 					job=callback_job
 			else:
 				raise Exception("Invalid callbacks !")
+		self.job_q.put(main_job)
 
 
 	def get_callbacks_dict(self):
@@ -199,6 +207,7 @@ def make_server_manager(ip,port, authkey):
 	
 	JobsManager.register('delete_waiter',callable=proxies.delete_waiter)	
 	JobsManager.register('add_job',callable=proxies.add_job)
+	JobsManager.register('get_server_db',callable=proxies.get_server_db,exposed=["add_job"])
 					
 	print "Starting server ..."
 	manager.start()	
@@ -232,9 +241,17 @@ class JobsProducer(object):
 			# for callback_job in  callback_list:
 			# 	self.shared_callbacks_dict[pickle.dumps(req)]=callback_job
 			# 	req=callback_job
+			job_id = self.jobs_persistance.add_job(job,callback_list)
+			job = job + (job_id,)
+			raise Exception("job_id="+str(job_id))
 			self.manager.add_job(job,callback_list)
 
 	def run(self):
+		##--------------------------- Jobs persistance ------------------------##
+		#self.jobs_persistance=server_db.Jobs_Persistance()
+
+		##---------------------------------------------------------------------##
+
 		manager = make_server_manager(IP,PORTNUM, AUTHKEY)
 		
 		self.manager=manager
@@ -242,7 +259,8 @@ class JobsProducer(object):
 		self.shared_result_q = manager.get_result_q()	
 		self.shared_logger_q = manager.get_logger_q()
 		self.shared_callbacks_dict = manager.get_callbacks_dict()
-
+		db=manager.get_server_db()
+		db.add_job(("server_test","execute_test",{"value":1}),["callback"])
 		##--------------------------------------------------------------##
 		print "starting logs sink"
 		self.logs_sink_process = mp.Process(
@@ -251,9 +269,11 @@ class JobsProducer(object):
 					#args=(shared_job_q, status,flag_terminate))		
 		self.logs_sink_process.start()
 		##--------------------------------------------------------------##
+		
+
 
 		##--------------------------------------------------------------##
-		print "starting callback reciever"
+		print "starting callback receiver"
 		
 		self.callbacks=CallBacks(self.shared_job_q, self.shared_callbacks_dict)
 		
@@ -295,7 +315,7 @@ class JobsProducer(object):
 
 def logs_sink(shared_logger_q):
 	"""
-	Function used to recieve logs from clients, this function is assigned to log sink process
+	Function used to receive logs from clients, this function is assigned to log sink process
 	"""
 	print "started logs sink"
 	#print sys.executable
@@ -346,6 +366,7 @@ if __name__ == '__main__':
  	time.sleep(1)
  	print "-"*60
  	print "\n"
+ 	print os.getpid()
  	while True: 		
  		print "jobs=%d\tcallbacks=%d" % (producer.shared_job_q.qsize(),len(producer.shared_callbacks_dict))
 		#TODO: Command line changes
