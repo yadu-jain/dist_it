@@ -10,15 +10,19 @@ def squar_it(ip,response=None):
 	return ip*ip
 	
 def new_callback_test()	:
+	print jobs.__file__
 	manager=jobs.JobsManager()
+
 	waiter=jobs.JobsWaiter(manager,"test3")	
 	job=("test.test_module","squar_it",{"ip":1})
 	#,[waiter.get_callback_job()]
-	#manager.add_job(task,[waiter.get_callback_job()])		
-	waiter.add_job(job)
-	print "waiting..."	
-	waiter.wait(timeout=5)	
+	print jobs.__file__
+	jobs.add_job(job)
+	#waiter.add_job(job)
+	#print "waiting..."	
+	#waiter.wait(timeout=5)	
 	print "Done"
+	#time.sleep(50)
 
 if __name__=='__main__':
 	new_callback_test()
