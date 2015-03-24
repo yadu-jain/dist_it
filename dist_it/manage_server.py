@@ -269,7 +269,7 @@ class JobsProducer(object):
 		self.shared_logger_q = manager.get_logger_q()
 		self.shared_callbacks_dict = manager.get_callbacks_dict()
 		db=manager.get_server_db()
-		db.add_job(("server_test","execute_test",{"value":1}),["callback"])
+		#db.add_job(("server_test","execute_test",{"value":1}),["callback"])
 		##--------------------------------------------------------------##
 		print "starting logs sink"
 		self.logs_sink_process = mp.Process(
