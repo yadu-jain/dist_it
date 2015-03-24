@@ -154,8 +154,10 @@ class Jobs_Persistance(object):
 				#raise e
 	
 	def job_done(self,response):
-		print os.getpid()
+		#print os.getpid()
+
 		job=response["request"]
+		#print job
 		total_time=int(response["total_time"])
 		row_id=job[3]
 		if row_id==None:
@@ -175,7 +177,7 @@ class Jobs_Persistance(object):
 				with self.sqlite_conn:
 					cur=self.sqlite_conn.cursor()
 					res=cur.execute(query,params)
-					print res
+					#print res
 					cur.close()
 			except Exception as e:				
 				print "Failed to insert into db ! | "+str(e)

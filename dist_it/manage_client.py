@@ -90,7 +90,7 @@ def execute_job(job_q, result_q,logger_q,status,flag_terminate):
 			op_dict=module_runner.run(job[0],job[1],job[2],log_fun)
 			end_time=datetime.now()
 			total_time=(end_time-start_time).total_seconds()
-			op_dict["request"]=job
+			op_dict["request"]=job			
 			op_dict["total_time"]=total_time
 			result_q.put(op_dict)
 			print os.getpid()," did job ",job, op_dict["success"],op_dict["error"]

@@ -29,21 +29,20 @@ class JobsManager(SyncManager):
 def callback_handler(callbacks,shared_result_q,shared_logger_q):
 	print "recieving callbacks"
 	
-	manager=jobs.JobsManager()
-	print jobs.__file__
+	manager=jobs.JobsManager()	
 	db=manager.get_server_db()
 	while True:
 		try:
 			response = shared_result_q.get()
 			default_callback(response,shared_logger_q,db)		
-			callbacks.process_callback(response)									
+			callbacks.process_callback(response,db)									
 			time.sleep(0.01)
 		except Exception as e:			
 			print "callback_handler:",e
 			traceback.print_exc()
 			break
 
-def default_callback(response,shared_logger_q,db):
+def default_callback(response,shared_logger_q,db):	
 	db.job_done(response)
 	if response["success"]==False:		
 		shared_logger_q.put_nowait(response)
@@ -60,18 +59,19 @@ class CallBacks(object):
 		self.callbacks_dict=callbacks_dict
 		self.shared_job_q=shared_job_q
 	
-	def process_callback(self,response):
+	def process_callback(self,response,db):
 		request = response["request"]				
 		if "response" in request[2]:
 			del request[2]["response"]
 		#test_log(request)
-		str_req = pickle.dumps(request)
+		str_req = pickle.dumps(request)		
 		if str_req in self.callbacks_dict:
 			callback = self.callbacks_dict[str_req]						
 			del self.callbacks_dict[str_req]
 			#if response["success"]==True:			
-						
-			callback[2]["response"]=response
+			callback[2]["response"]=response			
+			row_id = db.add_job(callback,[])
+			callback = callback+(row_id,)			
 			self.shared_job_q.put(callback)				
 	
 class ClientProxies:
