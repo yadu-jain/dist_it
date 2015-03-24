@@ -31,6 +31,7 @@ class Jobs_Persistance(object):
 	"""
 	def __init__(self,load_previous=False):		
 		try:			
+			print "init"
 			self.sqlite_conn=sqlite.connect(conn_name,check_same_thread=False)
 			to_create=False
 			try:
@@ -77,17 +78,10 @@ class Jobs_Persistance(object):
 			print e
 			raise Exception("Failed to connect sqlite db"+": "+str(e))
 		self.lock = Lock()
-		
-	def init_db(self):
-		pass
-	def add_job(self,job,callback_list,job_type="DEFAULT"):
-		
-		#print self.sqlite_conn.__init__()
-		print "added_job"
-		
-		print os.getpid() 
+			
+	def add_job(self,job,callback_list,job_type="DEFAULT"):		
+		print os.getpid()
 		print threading.current_thread()
-		print job
 		query="""
 		INSERT INTO jobs
 		(
@@ -127,7 +121,7 @@ class Jobs_Persistance(object):
 
 		row_id=None
 		with self.lock:
-			print self.lock
+		#print self.lock
 			try:
 				with self.sqlite_conn:
 					cur = self.sqlite_conn.cursor() 
@@ -139,7 +133,7 @@ class Jobs_Persistance(object):
 			except Exception as e:
 				print e
 				pass
-		return row_id
+			return row_id
 
 	def job_queued(self,job):
 		row_id=job[3]
@@ -149,8 +143,7 @@ class Jobs_Persistance(object):
 			UPDATE jobs SET is_queued=1 WHERE id=?
 		"""
 		params=[row_id]
-		with self.lock:
-			print self.lock
+		with self.lock:			
 			try:
 				with self.sqlite_conn:
 					cur=self.sqlite_conn.cursor()
@@ -158,11 +151,12 @@ class Jobs_Persistance(object):
 					cur.close()
 			except Exception as e:
 				print e
-				raise e
+				#raise e
 	
 	def job_done(self,response):
+		print os.getpid()
 		job=response["request"]
-		tota_time=int(response["total_time"])
+		total_time=int(response["total_time"])
 		row_id=job[3]
 		if row_id==None:
 			return
@@ -176,16 +170,14 @@ class Jobs_Persistance(object):
 			WHERE id=?
 		"""
 		params=[is_success,datetime.now(),total_time,row_id]
-		with self.lock:
-			print self.lock
-			try:
-				print self.sqlite_conn 
+		with self.lock:			
+			try:				
 				with self.sqlite_conn:
 					cur=self.sqlite_conn.cursor()
 					res=cur.execute(query,params)
 					print res
 					cur.close()
-			except Exception as e:
-				print "Failed to insert into db !"
-				raise e
+			except Exception as e:				
+				print "Failed to insert into db ! | "+str(e)
+				#raise e
 	

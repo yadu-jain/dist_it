@@ -12,6 +12,7 @@ import os
 import pickle
 import sys, traceback
 import server_db
+from helpers import jobs
 
 AUTHKEY= "60c05c632a2822a0a877c7e991602543"
 PORTNUM = 8004 #Preffered port
@@ -25,12 +26,16 @@ class JobsManager(SyncManager):
 	pass
 
 
-def callback_handler(callbacks,shared_result_q,shared_logger_q,):
+def callback_handler(callbacks,shared_result_q,shared_logger_q):
 	print "recieving callbacks"
+	
+	manager=jobs.JobsManager()
+	print jobs.__file__
+	db=manager.get_server_db()
 	while True:
 		try:
 			response = shared_result_q.get()
-			default_callback(response,shared_logger_q)		
+			default_callback(response,shared_logger_q,db)		
 			callbacks.process_callback(response)									
 			time.sleep(0.01)
 		except Exception as e:			
@@ -38,8 +43,8 @@ def callback_handler(callbacks,shared_result_q,shared_logger_q,):
 			traceback.print_exc()
 			break
 
-def default_callback(response,shared_logger_q):
-
+def default_callback(response,shared_logger_q,db):
+	db.job_done(response)
 	if response["success"]==False:		
 		shared_logger_q.put_nowait(response)
 
@@ -80,6 +85,7 @@ class ClientProxies:
 		self.callbacks_dict ={}
 		self.sync_data={}
 		self.waiters={}		
+		self.server_db=None
 #		self.manager=None
 
 	def __get_default_pool_config__(self):
@@ -98,7 +104,9 @@ class ClientProxies:
 		return self.sync_data
 
 	def get_server_db(self):
-		return server_db.Jobs_Persistance()		
+		if self.server_db==None:
+			self.server_db=server_db.Jobs_Persistance()		
+		return self.server_db
 
 	def get_pool_config(self,id):	
 		#return self.manager==None		
@@ -107,6 +115,7 @@ class ClientProxies:
 			self.pools[id]=DEFAULT_POOL_CONFIG
 		return self.pools
 
+	## Not Used any more(deprecated)
 	def add_job(self,job,callback_list=[]):		
 		if type(job)==tuple:
 			if len(job)==2:
@@ -207,7 +216,7 @@ def make_server_manager(ip,port, authkey):
 	
 	JobsManager.register('delete_waiter',callable=proxies.delete_waiter)	
 	JobsManager.register('add_job',callable=proxies.add_job)
-	JobsManager.register('get_server_db',callable=proxies.get_server_db,exposed=["add_job"])
+	JobsManager.register('get_server_db',callable=proxies.get_server_db,exposed=["add_job","job_done","job_queued"])
 					
 	print "Starting server ..."
 	manager.start()	
@@ -366,7 +375,7 @@ if __name__ == '__main__':
  	time.sleep(1)
  	print "-"*60
  	print "\n"
- 	print os.getpid()
+ 	#print os.getpid()
  	while True: 		
  		print "jobs=%d\tcallbacks=%d" % (producer.shared_job_q.qsize(),len(producer.shared_callbacks_dict))
 		#TODO: Command line changes

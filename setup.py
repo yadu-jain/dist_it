@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 setup(
     name='dist_it',
     version='0.1',
-    description='testin setuptools',
+    description='install dist_it',
     author='Heera',
     include_package_data = True,
 #    package_data={"": ["*.ini"]},
