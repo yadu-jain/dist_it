@@ -80,8 +80,8 @@ class Jobs_Persistance(object):
 		self.lock = Lock()
 			
 	def add_job(self,job,callback_list,job_type="DEFAULT"):		
-		print os.getpid()
-		print threading.current_thread()
+		#print os.getpid()
+		#print threading.current_thread()
 		query="""
 		INSERT INTO jobs
 		(

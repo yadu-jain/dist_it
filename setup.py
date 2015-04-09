@@ -13,6 +13,7 @@ setup(
     				,"xmltodict"    	## XML to dictionary
     				,"docutils"
     				,"suds" 				## Soap Client
+                    ,"pytz"             ## Time Zoned Date
     			],
     #setup_requires=["virtualenv"],
     packages = find_packages()
