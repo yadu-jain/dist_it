@@ -423,7 +423,7 @@ if __name__== "__main__":
 	#print json.dumps(get_city_pairs_to_pull(1),indent=4)
 	#AGR	GOA	2014-09-17
 	#get_routes(5,"MUM","KUD","2014-09-20")
-	get_cities(44548425)
+	#get_cities(44548425)
 	
 	#print json.dumps(temp,indent=4)
 	#get_to_cities(2,"Bangalore",42)
@@ -431,7 +431,7 @@ if __name__== "__main__":
 	#print get_routes(16,43,170,"2014-09-06")	
 	
 	#get_to_cities(14,"Bangalore",42)
-	#MUM	KUD
-	#t=get_response("pull_pickups_and_dropoffs","2584759GOA1PNQ")
-	#t=xmltodict.parse(t)
-	#print json.dumps(t,indent=4)
+	#MUM	KUD 
+	t=get_response("pull_routes",1,53,43,'06-02-2015')
+	t=xmltodict.parse(t)
+	print json.dumps(t,indent=4)

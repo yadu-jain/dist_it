@@ -17,10 +17,10 @@ def new_callback_test()	:
 	job=("test.test_module","squar_it",{"ip":1})
 	#,[waiter.get_callback_job()]
 	print jobs.__file__
-	jobs.add_job(job)
-	#waiter.add_job(job)
+	#jobs.add_job(job)
+	waiter.add_job(job)
 	#print "waiting..."	
-	#waiter.wait(timeout=5)	
+	waiter.wait(timeout=20)	
 	print "Done"
 	#time.sleep(50)
 
