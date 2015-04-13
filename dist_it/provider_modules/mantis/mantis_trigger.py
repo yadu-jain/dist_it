@@ -54,17 +54,18 @@ def handle_trigger(key,*args,**kwrds):
 	process_id=util_fun.get_process_id(15)
 	print "process_id=%d"% process_id
 	#kwrds["process_id"]=process_id
-	dict_args=kwrds["args"]
-	dict_args["process_id"]=process_id
+	dict_args=kwrds["args"]	
+	handler_args=[process_id]+dict_args
+	#dict_args["process_id"]=process_id
 	if key in dict_handlers:
 		handler=dict_handlers[key]
-		handler(*args,**dict_args)
+		handler(*handler_args)
 	else:
 		raise Exception("No handler found for key= %s!" % key)
 	
 
 
 if __name__ == '__main__':		
-	handle_trigger("tripstopbkg",args={"trip_id":"13021","journey_date":"2015-05-13"})
+	handle_trigger("tripstopbkg",args=["13021","2015-05-13"])
 	#handle_trigger("tripquota",args={"trip_id":"13021"})
 	#handle_trigger("tripquota",trip_id=23631)
