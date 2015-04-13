@@ -180,6 +180,12 @@ class Mantis_API(object):
 		pulldb=db.DB( *pulldb_config )		
 		pulldb.execute_sp("process_trigger_data",[process_id],commit=True)
 
+	def process_trip_journey_status(self,process_id):
+		pulldb_config 	= self.__get_pulldb_config__()
+		pulldb=db.DB( *pulldb_config )		
+		pulldb.execute_sp("process_trip_journey_all",[process_id],commit=True)
+		
+
 ##--------------------------Class Mantis_API Ends------------------------
 
 def is_trigger_enabled():
@@ -191,6 +197,38 @@ def is_trigger_enabled():
 		return True
 	else:
 		return False
+def get_trip_journey_status(process_id,trip_id,journey_date):
+	"""
+		Get only trip journey status
+	"""
+	global DEFAULT_SECTION
+	api=Mantis_API(DEFAULT_SECTION)
+	if api.loaded==False:
+		raise provider_exceptions.Config_Load_Exc(api.loading_error)
+	
+	jd = datetime.strptime(journey_date,"%Y-%m-%d")
+	str_journey_date=datetime.strftime(jd,"%Y-%m-%d")
+
+	# Pulling trip details on journey date
+	response=None
+	try:
+		response = api.call_crs_sp("trigger.pull_trip_journey_status",[str_journey_date,trip_id])									
+		if len(response)==0:
+			raise provider_exceptions.Process_Exc("No routes found !")
+	except Exception, ex:
+		raise provider_exceptions.Pull_Exc(str(ex))	
+	# Process Trip details on journey date into pulldb 
+	#print jsonx.dumps(response,indent=4)
+	try:
+		#print jsonx.dumps(response[0],indent=4)
+		data_to_insert=[]
+		for item in response[0]:
+		 	data_to_insert.append({"journey_date":item["JourneyDate"],"trip_id":item["TripID"], "is_active":item["IsActive"]})
+		pass
+		api.quick_insert("TRIP_JOURNEYS",data_to_insert,extra={"process_id":process_id})
+	except Exception, ex:
+		raise provider_exceptions.Process_Exc(str(ex))
+	
 
 def get_trip_journey(process_id,trip_id,journey_date):
 	"""
@@ -214,6 +252,7 @@ def get_trip_journey(process_id,trip_id,journey_date):
 		raise provider_exceptions.Pull_Exc(str(ex))
 
 	# Process Trip details on journey date into pulldb 
+	#print jsonx.dumps(response,indent=4)
 	try:
 		#print jsonx.dumps(response[0],indent=4)
 		api.quick_insert("trip_journey_details",response[0],extra={"process_id":process_id})
@@ -245,6 +284,17 @@ def process_trip_data(process_id):
 	except Exception, ex:
 		raise provider_exceptions.Process_Exc(str(ex))
 	
+def process_trip_journey_status(process_id):
+	global DEFAULT_SECTION
+	api=Mantis_API(DEFAULT_SECTION)
+	if api.loaded==False:
+		raise provider_exceptions.Config_Load_Exc(api.loading_error)
+
+	# Process all trip data into gds 
+	try:
+		api.process_trip_journey_status(process_id)
+	except Exception, ex:
+		raise provider_exceptions.Process_Exc(str(ex))
 
 def get_response(str_api_name,*args,**kwrds):
 	global DEFAULT_SECTION
@@ -266,8 +316,10 @@ def get_response(str_api_name,*args,**kwrds):
 if __name__== "__main__":
 	process_id=util_fun.get_process_id(15)
 	print process_id
-	get_trip_journey(process_id,10140,"2015-04-29")
-	process_trip_data(process_id)
+	#get_trip_journey(57727175,"23767","2015-04-20")
+	get_trip_journey_status(process_id,"13021","2015-05-13")
+	#process_trip_data(process_id)
+	process_trip_journey_status(process_id)
 	#get_trip_journey(667,10140,"2015-04-03")
 	# trip_id=10140
 	# journey_date="2015-04-02"

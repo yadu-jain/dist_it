@@ -8,7 +8,14 @@ from helpers import jobs,util_fun,gds_api
 # import json
 
 PROVIDER_ID=15
-TOTAL_PULL_DAYS=30
+TOTAL_PULL_DAYS=45
+
+def __do_nothing__(*args,**kwrds):
+	pass
+def __get_trip_journey_status__(process_id,trip_id,journey_date):	
+	mantis_api.get_trip_journey_status(process_id,trip_id,journey_date)
+	mantis_api.process_trip_journey_status(process_id)
+	util_fun.refresh_routes(trip_id,PROVIDER_ID,journey_date,journey_date)
 
 def __get_trip_journey__(process_id,trip_id,journey_date):
 	mantis_api.get_trip_journey(process_id,trip_id,journey_date)
@@ -23,6 +30,7 @@ def __get_all_trip_journey__(process_id,trip_id):
 		cur_date=today+timedelta(days=i)
 		journey_date=cur_date.strftime("%Y-%m-%d")
 		try:
+			print "Process_Id=%d, Trip_id=%s, journey_date=%s" %(process_id,str(trip_id),str(journey_date))
 			mantis_api.get_trip_journey(process_id,trip_id,journey_date)
 		except Exception as e:
 			pass
@@ -33,7 +41,7 @@ def __get_all_trip_journey__(process_id,trip_id):
 dict_handlers={}
 dict_handlers["tripquota"] 		= __get_all_trip_journey__
 dict_handlers["triparrgtran"] 	= __get_trip_journey__
-dict_handlers["tripstopbkg"] 	= __get_trip_journey__
+dict_handlers["tripstopbkg"] 	= __get_trip_journey_status__
 
 def handle_trigger(key,*args,**kwrds):
 	"""
@@ -45,15 +53,18 @@ def handle_trigger(key,*args,**kwrds):
 	global dict_handlers
 	process_id=util_fun.get_process_id(15)
 	print "process_id=%d"% process_id
-	kwrds["process_id"]=process_id
+	#kwrds["process_id"]=process_id
+	dict_args=kwrds["args"]
+	dict_args["process_id"]=process_id
 	if key in dict_handlers:
 		handler=dict_handlers[key]
-		handler(*args,**kwrds)
+		handler(*args,**dict_args)
 	else:
 		raise Exception("No handler found for key= %s!" % key)
 	
 
 
-if __name__ == '__main__':	
-	handle_trigger("tripstopbkg",trip_id=1788,journey_date="2015-04-10")
+if __name__ == '__main__':		
+	handle_trigger("tripstopbkg",args={"trip_id":"13021","journey_date":"2015-05-13"})
+	#handle_trigger("tripquota",args={"trip_id":"13021"})
 	#handle_trigger("tripquota",trip_id=23631)
