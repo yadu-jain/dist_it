@@ -25,7 +25,7 @@ conn_name="D:/repo/dist_it_new/env/dist_it/dist_it/data/server_db.db"
 # 		print os.getpid()
 # 		#self.sqlite_conn.add_job(obj[0],obj[1])
 # 		super(Persistant_Queue, self).put(obj,**kwrd)
-
+enabled=True
 class Jobs_Persistance(object):
 	"""
 	"""
@@ -160,7 +160,7 @@ class Jobs_Persistance(object):
 		#print job
 		total_time=int(response["total_time"])
 		row_id=job[3]
-		if row_id==None:
+		if row_id==None or row_id=0:
 			return
 		is_success=int(response["success"])
 		query="""

@@ -22,6 +22,30 @@ LOG_FLUSH_TIMEOUT=60*5 # Seconds
 LOG_BUFFER_SIZE=10
 DEFAULT_POOL_CONFIG={"pool_size":0}
 LOG_DIR="/home/swarthi/projects/dist_it_env/env/dist_it/Pull_logs"
+
+CONFIG_FILE="server_config.ini"
+DEFAULT_SECTION="active"
+class Server_Config(object):
+	def __init__(self, section):
+		super(Server_Config, self).__init__()
+		try:
+			import ConfigParser
+			global CONFIG_FILE
+			self.section = section
+			self.config=ConfigParser.ConfigParser()
+			path =  os.path.join(os.path.dirname(os.path.abspath(__file__)),CONFIG_FILE)
+			self.config.read(path)	
+			self.__table_schemas__ = {}		
+			if not (section in self.config.sections()):
+				raise Exception("Section "+section+" not Found !")
+			self.loaded=True
+		except Exception as ex:
+			self.loaded=False
+			self.loading_error=str(ex)
+
+	def get_config(self,key):
+		return self.config.get(self.section,key)
+
 class JobsManager(SyncManager):
 	pass
 
@@ -43,7 +67,8 @@ def callback_handler(callbacks,shared_result_q,shared_logger_q):
 			break
 
 def default_callback(response,shared_logger_q,db):	
-	db.job_done(response)
+	if db!=None:
+		db.job_done(response)
 	if response["success"]==False:		
 		shared_logger_q.put_nowait(response)
 
@@ -69,8 +94,10 @@ class CallBacks(object):
 			callback = self.callbacks_dict[str_req]						
 			del self.callbacks_dict[str_req]
 			#if response["success"]==True:			
-			callback[2]["response"]=response			
-			row_id = db.add_job(callback,[])
+			callback[2]["response"]=response
+			row_id=0
+			if db!=None:
+				row_id = db.add_job(callback,[])
 			callback = callback+(row_id,)			
 			self.shared_job_q.put(callback)				
 	
@@ -105,7 +132,9 @@ class ClientProxies:
 
 	def get_server_db(self):
 		if self.server_db==None:
-			self.server_db=server_db.Jobs_Persistance()		
+			server_config=Server_Config()
+			if int(server_config.get_config("server_db.enabled"))==1:
+				self.server_db=server_db.Jobs_Persistance()
 		return self.server_db
 
 	def get_pool_config(self,id):	
