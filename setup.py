@@ -14,6 +14,7 @@ setup(
     				,"docutils"
     				,"suds" 				## Soap Client
                     ,"pytz"             ## Time Zoned Date
+                    ,"sqlalchemy"
     			],
     #setup_requires=["virtualenv"],
     packages = find_packages()

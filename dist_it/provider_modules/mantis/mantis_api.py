@@ -218,7 +218,7 @@ def get_trip_journey_status(process_id,trip_id,journey_date):
 	except Exception, ex:
 		raise provider_exceptions.Pull_Exc(str(ex))	
 	# Process Trip details on journey date into pulldb 
-	#print jsonx.dumps(response,indent=4)
+	print jsonx.dumps(response,indent=4)
 	try:
 		#print jsonx.dumps(response[0],indent=4)
 		data_to_insert=[]
@@ -316,10 +316,10 @@ def get_response(str_api_name,*args,**kwrds):
 if __name__== "__main__":
 	process_id=util_fun.get_process_id(15)
 	print process_id
-	#get_trip_journey(57727175,"23767","2015-04-20")
-	get_trip_journey_status(process_id,"13021","2015-05-13")
+	get_trip_journey(12345,"23866","2015-04-30")
+	#get_trip_journey_status(process_id,"13021","2015-05-13")
 	#process_trip_data(process_id)
-	process_trip_journey_status(process_id)
+	#process_trip_journey_status(process_id)
 	#get_trip_journey(667,10140,"2015-04-03")
 	# trip_id=10140
 	# journey_date="2015-04-02"
