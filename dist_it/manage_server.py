@@ -33,6 +33,8 @@ def callback_handler(callbacks,shared_result_q,shared_logger_q):
 	
 	manager=jobs.JobsManager()	
 	db=manager.get_server_db()
+	if str(db)=="None":
+		db=None
 	while True:
 		try:
 			response = shared_result_q.get()
@@ -44,8 +46,8 @@ def callback_handler(callbacks,shared_result_q,shared_logger_q):
 			traceback.print_exc()
 			break
 
-def default_callback(response,shared_logger_q,db):	
-	if not db._getvalue() is None:
+def default_callback(response,shared_logger_q,db):		
+	if not db is None:
 		db.job_done(response)
 	if response["success"]==False:		
 		shared_logger_q.put_nowait(response)
@@ -68,15 +70,14 @@ class CallBacks(object):
 			del request[2]["response"]
 		#test_log(request)
 		str_req = pickle.dumps(request)		
-		#print str_req
-		print request
+		#print str_req		
 		if str_req in self.callbacks_dict:
 			callback = self.callbacks_dict[str_req]						
 			del self.callbacks_dict[str_req]
 			#if response["success"]==True:			
 			callback[2]["response"]=response
 			row_id=0
-			if not db._getvalue() is None:
+			if not db is None:
 				row_id = db.add_job(callback,[])
 			callback = callback+(row_id,)			
 			self.shared_job_q.put(callback)				
@@ -355,7 +356,7 @@ def logs_sink(shared_logger_q):
 		try:
 			log=shared_logger_q.get_nowait()			
 			try:	
-				print log			
+				#print log			
 				log_time=datetime.now()
 				str_log=json.dumps(log)
 				str_log=str_log.replace("\n","")
@@ -390,12 +391,15 @@ if __name__ == '__main__':
  	#producer.add_job(("test_module","squar_it",{"ip":3}))	
  	#producer.add_job(("test_module","squar_it",{"ip":4}))	
  	print "Default Python Interpreter: ", sys.executable
- 	time.sleep(1)
+ 	time.sleep(2)
  	print "-"*60
  	print "\n"
  	#print os.getpid()
  	while True: 		
- 		print "jobs=%d\tcallbacks=%d" % (producer.shared_job_q.qsize(),len(producer.shared_callbacks_dict))
+ 		sys.stdout.write("jobs=%d\tcallbacks=%d \r" % (producer.shared_job_q.qsize(),len(producer.shared_callbacks_dict)))
+		sys.stdout.flush()
+ 		#print "jobs=%d\tcallbacks=%d \r" % (producer.shared_job_q.qsize(),len(producer.shared_callbacks_dict))
+ 		sys.stdout.flush()
 		#TODO: Command line changes
 		time.sleep(1) 		
 	producer.shutdown()

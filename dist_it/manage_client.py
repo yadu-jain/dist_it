@@ -14,9 +14,11 @@ import socket
 import json
 from json import JSONEncoder
 from helpers import server_config as config
+import pprint
 #AUTHKEY= "60c05c632a2822a0a877c7e991602543"
 #PORTNUM = 8004 #Preffered port
 #PRODUCER_IP='127.0.0.1'#"10.66.60.90"
+pp = pprint.PrettyPrinter(indent=1)
 
 CLIENT_NAME=socket.gethostname()
 CONSUMER_NAME="MEEPO"
@@ -93,8 +95,10 @@ def execute_job(job_q, result_q,logger_q,status,flag_terminate):
 			total_time=(end_time-start_time).total_seconds()
 			op_dict["request"]=job			
 			op_dict["total_time"]=total_time
-			result_q.put(op_dict)
-			print os.getpid()," did job ",job, op_dict["success"],op_dict["error"]
+			result_q.put(op_dict)			
+			pp.pprint([os.getpid(),op_dict["success"],op_dict["error"],job[:2]])
+			#print "\n"
+			#print os.getpid()," did job ",job, op_dict["success"],op_dict["error"]
 		except Queue.Empty:			
 			if flag_terminate.value==1:
 				status.value='t' #finished
