@@ -13,9 +13,10 @@ import time
 import socket
 import json
 from json import JSONEncoder
-AUTHKEY= "60c05c632a2822a0a877c7e991602543"
-PORTNUM = 8004 #Preffered port
-PRODUCER_IP='127.0.0.1'#"10.66.60.90"
+from helpers import server_config as config
+#AUTHKEY= "60c05c632a2822a0a877c7e991602543"
+#PORTNUM = 8004 #Preffered port
+#PRODUCER_IP='127.0.0.1'#"10.66.60.90"
 
 CLIENT_NAME=socket.gethostname()
 CONSUMER_NAME="MEEPO"
@@ -121,6 +122,10 @@ def create_consumer_pool(manager,pool_size,client_logger_q):
 	return procs,pool_metadata
 
 def create_pool(name):
+	server_config=config.Server_Config()
+	AUTHKEY 	= server_config.get_config("authkey")
+	PORTNUM 	= int(server_config.get_config("portnum"))
+	PRODUCER_IP = server_config.get_config("ip")
 	print "Creating pool ",name
 	manager = make_client_manager(PRODUCER_IP, PORTNUM, AUTHKEY)	
 	d=manager.get_pool_config(name)
