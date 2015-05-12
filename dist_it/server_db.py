@@ -235,7 +235,7 @@ class Jobs_Persistance(object):
 							params TEXT,
 							callbacks TEXT,
 							is_success INTEGER,	    					
-							error TEXT
+							error TEXT,
 							job_type TEXT,
 							created_on TIMESTAMP,	    					
 							is_queued INTEGER,			
