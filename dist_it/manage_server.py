@@ -228,7 +228,7 @@ def make_server_manager(ip,port, authkey):
 	
 	JobsManager.register('delete_waiter',callable=proxies.delete_waiter)	
 	JobsManager.register('add_job',callable=proxies.add_job)
-	JobsManager.register('get_server_db',callable=server_db.Jobs_Persistance,exposed=["add_job","job_done","job_queued"])
+	JobsManager.register('get_server_db',callable=proxies.get_server_db,exposed=["add_job","job_done","job_queued"])
 					
 	print "Starting server ..."
 	manager.start()	
@@ -285,6 +285,8 @@ class JobsProducer(object):
 		self.shared_logger_q = manager.get_logger_q()
 		self.shared_callbacks_dict = manager.get_callbacks_dict()
 		db=manager.get_server_db()
+		if not db is None:
+			print "tested job db connection"
 		#db.add_job(("server_test","execute_test",{"value":1}),["callback"])
 		##--------------------------------------------------------------##
 		print "starting logs sink"
