@@ -264,7 +264,7 @@ class Jobs_Persistance(object):
 			params,
 			callbacks,
 			is_success,
-			error
+			error,
 			job_type,			
 			created_on,
 			is_queued,			
