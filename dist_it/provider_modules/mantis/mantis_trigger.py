@@ -43,14 +43,15 @@ def __get_all_trip_journey__(process_id,trip_id):
 	today=datetime.now()
 	temp_response = mantis_api.get_max_trip_journey_date(trip_id)
 	print temp_response
-	end_date=None
-	if len(temp_response)>0 and len(temp_response[0])>0 and not datetime.strptime(temp_response[0][0]["JourneyDate"] is None:
-		end_date=datetime.strptime(temp_response[0][0]["JourneyDate"],"%Y-%m-%d")
+	str_end_date=None
+	if len(temp_response)>0 and len(temp_response[0])>0 :
+		str_end_date=temp_response[0][0]["JourneyDate"]
 
-	if end_date == None:
+	if str_end_date == None:
 		raise Exception("No Future scheduled date found !")
 
 	cur_date=today
+	end_date=datetime.strptime(str_end_date,"%Y-%m-%d")
 	end_date_plus1=end_date+timedelta(days=1)
 	while cur_date < end_date_plus1 :		
 		journey_date=cur_date.strftime("%Y-%m-%d")
@@ -125,5 +126,6 @@ if __name__ == '__main__':
 	#handle_trigger("tripstopbkg",args=["13021","2015-05-13"])
 	#handle_trigger("tripquota",args=["21063"])
 	#handle_trigger("tripquota",trip_id=23631)
-	handle_trigger("pickupdtlchng",args=["32204"])
-	handle_trigger("depchng",args=["3302","2015-05-14"])
+	#handle_trigger("pickupdtlchng",args=["32204"])
+	#handle_trigger("depchng",args=["3302","2015-05-14"])
+	pass
