@@ -44,7 +44,7 @@ def __get_all_trip_journey__(process_id,trip_id):
 	temp_response = mantis_api.get_max_trip_journey_date(trip_id)
 	print temp_response
 	end_date=None
-	if len(temp_response)>0 and len(temp_response[0])>0:
+	if len(temp_response)>0 and len(temp_response[0])>0 and not datetime.strptime(temp_response[0][0]["JourneyDate"] is None:
 		end_date=datetime.strptime(temp_response[0][0]["JourneyDate"],"%Y-%m-%d")
 
 	if end_date == None:
