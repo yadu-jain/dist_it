@@ -70,7 +70,10 @@ def __get_trip_journey_pickups__(process_id,trip_id,journey_date):
 		1.get latest trip journey routes from crs and refresh cache
 		2. refresh its routes pickups timing
 	"""
-	__get_trip_journey__(process_id,trip_id,journey_date)
+	#__get_trip_journey__(process_id,trip_id,journey_date)
+	mantis_api.get_trip_journey(process_id,trip_id,journey_date)
+	mantis_api.process_trip_data(process_id)
+	util_fun.refresh_trip_routes_details(trip_id,PROVIDER_ID,journey_date)
 	util_fun.refresh_trip_pickups(trip_id,PROVIDER_ID,journey_date)
 
 def __get_trip_pickups__(process_id,trip_id):
@@ -127,5 +130,5 @@ if __name__ == '__main__':
 	#handle_trigger("tripquota",args=["21063"])
 	#handle_trigger("tripquota",trip_id=23631)
 	#handle_trigger("pickupdtlchng",args=["32204"])
-	#handle_trigger("depchng",args=["3302","2015-05-14"])
+	handle_trigger("depchng",args=["16943","2015-05-20"])
 	pass
