@@ -10,7 +10,7 @@ from collections import OrderedDict
 import decimal
 
 CONFIG_FILE="mantis_config.ini"
-DEFAULT_SECTION="dev"
+DEFAULT_SECTION="live"
 
 class Mantis_API(object):
 	"""
@@ -33,6 +33,8 @@ class Mantis_API(object):
 			if not (section in self.config.sections()):
 				raise Exception("Section "+section+" not Found !")
 			self.loaded=True
+			#TODO:
+			#self.generic_sp_api=self.__load_generic_sp_api__()
 		except Exception as ex:
 			self.loaded=False
 			self.loading_error=str(ex)
@@ -57,6 +59,17 @@ class Mantis_API(object):
 		except Exception, ex:
 			raise Exception("Invalid crsdb Configuration !|"+str(ex))
 
+	def __load_generic_sp_api__(self):
+		import json
+		path =  os.path.join(os.path.dirname(os.path.abspath(__file__)),"mantis_api.json")
+		api_json=None
+		try:
+			with open(path,"rb") as f:
+				api_json=json.loads(f.read())["crs_sp_specs"]
+		except Exception as e:
+			raise Exception("Failed to load generic sp api ! |"+str(e))
+		return api_json
+
 	def __get_table_schema__(self,table_name):
 		if not table_name in self.__table_schemas__:
 			pulldb_config 	= self.__get_pulldb_config__()
@@ -65,8 +78,8 @@ class Mantis_API(object):
 			rows_table_schema = pulldb.execute_query("""
 				SELECT 
 					lower(column_name) column_name,
-			    	is_nullable,
-			    	data_type
+					is_nullable,
+					data_type
 				FROM   INFORMATION_SCHEMA.Columns WITH (NOLOCK)
 				WHERE  table_name = '%s'
 				""" % table_name )			
@@ -170,7 +183,46 @@ class Mantis_API(object):
 		#cursor.close()		
 		conn.close()
 		return data_set
+	
+	def call_crs_db_via_api(self,sp_type,list_params,commit=False):
+		"""
+			Get sp name correspnding to sp Type
+			call crs generic api to execute the sp passing params
+			Returns data_set (list of tables) as result from sp
+		"""
+		
+		sp_name=None
+		try:
+			sp_name = self.get_config(sp_type)
+		except Exception as e:
+			raise Exception("SP Type not found ! | "+str(e))
+		url=generic_sp_url+"?key="+api_key,
+		sp_details=self.generic_sp_api[sp_name]
+		#TODO:
 
+	def __create_url_params__(self,sp_name,list_params):
+		pass
+		#TODO:
+	def __call_crs_api__(self,url,method="GET",data=None):
+		h=Http()    
+		print api_url
+		print data    
+		if not data is None:
+			method="POST"
+		res=None
+		content=None
+		if method=="POST":
+			res,content=h.request(url,method,urlencode(data),headers={"content-type":"application/x-www-form-urlencoded"})       
+		else:
+			res,content=h.request(url)       
+		if res["status"]=='200':
+			response = json.JSONDecoder(object_pairs_hook=OrderedDict).decode(content)         
+			if response.has_key("success") and response["success"]==True:
+				return response["data"]
+			elif response.has_key("success") and response["success"]==False:
+				raise Exception(response["msg"])
+			else:
+				raise Exception("GDS Invalid Response !")
 
 	def get_config(self,key):
 		return self.config.get(self.section,key)
@@ -184,7 +236,11 @@ class Mantis_API(object):
 		pulldb_config 	= self.__get_pulldb_config__()
 		pulldb=db.DB( *pulldb_config )		
 		pulldb.execute_sp("process_trip_journey_all",[process_id],commit=True)
-		
+	
+	def process_pickup_details(self,process_id):
+		pulldb_config 	= self.__get_pulldb_config__()
+		pulldb=db.DB( *pulldb_config )		
+		pulldb.execute_sp("process_pickups_master",[process_id],commit=True)	
 
 ##--------------------------Class Mantis_API Ends------------------------
 
@@ -272,6 +328,22 @@ def get_trip_journey(process_id,trip_id,journey_date):
 	except Exception,ex:
 		raise provider_exceptions.Process_Exc(str(ex))
 
+def get_max_trip_journey_date(trip_id):
+	global DEFAULT_SECTION
+	api=Mantis_API(DEFAULT_SECTION)
+	if api.loaded==False:
+		raise provider_exceptions.Config_Load_Exc(api.loading_error)
+
+	# Pulling pickup details
+	response=None
+	try:
+		response = api.call_crs_sp("trigger.get_max_trip_journey_date",[trip_id])									
+		if len(response)==0:
+			raise provider_exceptions.Process_Exc("No routes found !")
+	except Exception, ex:
+		raise provider_exceptions.Pull_Exc(str(ex))
+	return response
+
 def process_trip_data(process_id):
 	global DEFAULT_SECTION
 	api=Mantis_API(DEFAULT_SECTION)
@@ -293,6 +365,52 @@ def process_trip_journey_status(process_id):
 	# Process all trip data into gds 
 	try:
 		api.process_trip_journey_status(process_id)
+	except Exception, ex:
+		raise provider_exceptions.Process_Exc(str(ex))
+
+def get_pickup_details(process_id,pickup_id):
+	global DEFAULT_SECTION
+	api=Mantis_API(DEFAULT_SECTION)
+	if api.loaded==False:
+		raise provider_exceptions.Config_Load_Exc(api.loading_error)
+
+	# Pulling pickup details
+	response=None
+	try:
+		response = api.call_crs_sp("trigger.pull_pickup_details",[pickup_id])									
+		if len(response)==0:
+			raise provider_exceptions.Process_Exc("No routes found !")
+	except Exception, ex:
+		raise provider_exceptions.Pull_Exc(str(ex))
+
+	# Process pickups into pulldb 
+	#print json.dumps(response,indent=4)
+	try:
+		pass
+		#print jsonx.dumps(response[0],indent=4)
+		#TODO:use existing pickup_master table or create table for pickup details
+		if len(response)<1:
+			raise Exception("no result found from crs !")
+		pickups=response[0]
+		pickup_rows=[]		
+		for pickup in pickups:								
+			pickup_rows.append({"pickup_id":pickup["PickupID"],"pickup_name":pickup["PickupName"],"city_id":pickup["CityID"],"pickup_address":pickup["PickupAddress"],"landmark":pickup["Landmark"],"contact_numbers":pickup["ContactNumbers"]})	
+		if len(pickup_rows)>0:
+			api.quick_insert("pickups",pickup_rows,extra={"process_id":process_id})
+		else:
+			raise Exception("No Pickup found !")		
+	except Exception, ex:
+		raise provider_exceptions.Process_Exc(str(ex))	
+
+def process_pickup_details(process_id):
+	global DEFAULT_SECTION
+	api=Mantis_API(DEFAULT_SECTION)
+	if api.loaded==False:
+		raise provider_exceptions.Config_Load_Exc(api.loading_error)
+
+	# Process pickup
+	try:
+		response = api.process_pickup_details(process_id)
 	except Exception, ex:
 		raise provider_exceptions.Process_Exc(str(ex))
 
