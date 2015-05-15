@@ -261,9 +261,12 @@ def get_trip_journey_status(process_id,trip_id,journey_date):
 	api=Mantis_API(DEFAULT_SECTION)
 	if api.loaded==False:
 		raise provider_exceptions.Config_Load_Exc(api.loading_error)
-	
-	jd = datetime.strptime(journey_date,"%Y-%m-%d")
-	str_journey_date=datetime.strftime(jd,"%Y-%m-%d")
+	str_journey_date=None
+	if journey_date==None:
+		str_journey_date="0"
+	else:
+		jd = datetime.strptime(journey_date,"%Y-%m-%d")
+		str_journey_date=datetime.strftime(jd,"%Y-%m-%d")
 
 	# Pulling trip details on journey date
 	response=None
@@ -275,13 +278,22 @@ def get_trip_journey_status(process_id,trip_id,journey_date):
 		raise provider_exceptions.Pull_Exc(str(ex))	
 	# Process Trip details on journey date into pulldb 
 	print jsonx.dumps(response,indent=4)
+	min_date=None
+	max_date=None
+	dt_date=None
 	try:
 		#print jsonx.dumps(response[0],indent=4)
 		data_to_insert=[]
 		for item in response[0]:
 		 	data_to_insert.append({"journey_date":item["JourneyDate"],"trip_id":item["TripID"], "is_active":item["IsActive"]})
+		 	dt_date = datetime.strptime(item["JourneyDate"],"%Y-%m-%d")
+		 	if min_date==None or min_date> dt_date:
+		 		min_date=dt_date
+		 	if max_date==None or max_date< dt_date:
+		 		max_date=dt_date
 		pass
 		api.quick_insert("TRIP_JOURNEYS",data_to_insert,extra={"process_id":process_id})
+		return (min_date,max_date)
 	except Exception, ex:
 		raise provider_exceptions.Process_Exc(str(ex))
 	
@@ -432,9 +444,9 @@ def get_response(str_api_name,*args,**kwrds):
 
 
 if __name__== "__main__":
-	process_id=util_fun.get_process_id(15)
-	print process_id
-	get_trip_journey(12345,"23866","2015-04-30")
+	#process_id=util_fun.get_process_id(15)
+	#print process_id
+	#get_trip_journey(12345,"23866","2015-04-30")
 	#get_trip_journey_status(process_id,"13021","2015-05-13")
 	#process_trip_data(process_id)
 	#process_trip_journey_status(process_id)
@@ -443,9 +455,9 @@ if __name__== "__main__":
 	# journey_date="2015-04-02"
 	# jd = datetime.strptime(journey_date,"%Y-%m-%d")
 	# str_journey_date=datetime.strftime(jd,"%Y-%m-%d")
-	# api = Mantis_API(DEFAULT_SECTION)
-	# #response = api.call_crs_sp("trigger.pull_trip_details",[trip_id])
-	# #print response	
+	#api = Mantis_API(DEFAULT_SECTION)
+	#response = api.call_crs_sp("trigger.pull_trip_journey_status",["0",2563])
+	#print jsonx.dumps(response,indent=4)	
 	# response = api.call_crs_sp("trigger.pull_trip_journey",[trip_id,str_journey_date])
 	# str_data = jsonx.dumps(response,indent=4)
 	# #print str_data
