@@ -277,7 +277,7 @@ def get_trip_journey_status(process_id,trip_id,journey_date):
 	except Exception, ex:
 		raise provider_exceptions.Pull_Exc(str(ex))	
 	# Process Trip details on journey date into pulldb 
-	print jsonx.dumps(response,indent=4)
+	#print jsonx.dumps(response,indent=4)
 	min_date=None
 	max_date=None
 	dt_date=None
@@ -291,7 +291,7 @@ def get_trip_journey_status(process_id,trip_id,journey_date):
 		 		min_date=dt_date
 		 	if max_date==None or max_date< dt_date:
 		 		max_date=dt_date
-		pass
+		#print jsonx.dumps(data_to_insert)
 		api.quick_insert("TRIP_JOURNEYS",data_to_insert,extra={"process_id":process_id})
 		return (min_date,max_date)
 	except Exception, ex:

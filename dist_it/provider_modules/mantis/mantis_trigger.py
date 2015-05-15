@@ -177,5 +177,6 @@ if __name__ == '__main__':
 	#handle_trigger("pickupdtlchng",args=["32204"])
 	#handle_trigger("depchng",args=["16943","2015-05-20"])
 	#handle_trigger("tripscheduled",args=["2015-05-16","2015-05-16","1","1","16943"])
+	handle_trigger("tripstopbkg",args=["16943"])
 	#tripscheduled()
 	pass
