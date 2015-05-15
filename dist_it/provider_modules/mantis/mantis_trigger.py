@@ -14,7 +14,7 @@ dict_handlers={}
 
 def __do_nothing__(*args,**kwrds):
 	pass
-def handle_trip_status_changed(process_id,trip_id):	
+def handle_trip_status_changed(process_id,trip_id,journey_date=None):	
 	"""
 		1.get trip's status for all future dates in crs.
 		2.update the status of trip journey in gds
@@ -143,7 +143,7 @@ dict_handlers={
 	"tripUnblocked" 		: handle_trip_journey_status_changed,
 	"servicepkptimechng" 	: handle_trip_pickups_changed,
 	"pickupdtlchng" 		: handle_pickup_chagned,
-	"tripcheduled" 		: handle_trip_scheduled,
+	"tripscheduled" 		: handle_trip_scheduled,
 }
 ##---------------------------------------------------------------------------------------------------------------------------------##
 
