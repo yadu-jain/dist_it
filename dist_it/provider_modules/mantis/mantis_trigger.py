@@ -143,7 +143,7 @@ dict_handlers={
 	"tripUnblocked" 		: handle_trip_journey_status_changed,
 	"servicepkptimechng" 	: handle_trip_pickups_changed,
 	"pickupdtlchng" 		: handle_pickup_chagned,
-	"tripscheduled" 		: handle_trip_scheduled,
+	"tripcheduled" 		: handle_trip_scheduled,
 }
 ##---------------------------------------------------------------------------------------------------------------------------------##
 
