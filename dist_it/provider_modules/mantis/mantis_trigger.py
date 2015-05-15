@@ -44,6 +44,13 @@ def __get_trip_journey__(process_id,trip_id,journey_date):
 	mantis_api.process_trip_data(process_id)
 	util_fun.refresh_routes(trip_id,PROVIDER_ID,journey_date,journey_date)
 
+def handle_trip_journey_dep_changed(process_id,trip_id,journey_date):
+	"""
+	"""
+	mantis_api.get_trip_journey(process_id,trip_id,journey_date)
+	mantis_api.process_trip_data(process_id)
+	util_fun.refresh_routes_details(trip_id,PROVIDER_ID,journey_date)
+
 def handle_trip_scheduled(process_id,from_jd,to_jd,flag_dep,flag_coach,trip_id):
 	"""
 		1.Get trip's all details for given from_jd to to_jd
@@ -144,6 +151,7 @@ dict_handlers={
 	"servicepkptimechng" 	: handle_trip_pickups_changed,
 	"pickupdtlchng" 		: handle_pickup_chagned,
 	"tripscheduled" 		: handle_trip_scheduled,
+	"depchng" 				: handle_trip_journey_dep_changed
 }
 ##---------------------------------------------------------------------------------------------------------------------------------##
 
