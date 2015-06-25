@@ -11,33 +11,44 @@ import time
 import os
 import pickle
 import sys, traceback
+import server_db
+from helpers import jobs,server_config as config
 
-AUTHKEY= "60c05c632a2822a0a877c7e991602543"
-PORTNUM = 8004 #Preffered port
-IP='127.0.0.1' #"10.66.60.90"
+#AUTHKEY= "60c05c632a2822a0a877c7e991602543"
+#PORTNUM = 8004 #Preffered port
+#IP='127.0.0.1' #"10.66.60.90"
 
 LOG_FLUSH_TIMEOUT=60*5 # Seconds
 LOG_BUFFER_SIZE=10
 DEFAULT_POOL_CONFIG={"pool_size":0}
-LOG_DIR="/home/swarthi/projects/dist_it_env/env/dist_it/Pull_logs"
+
+
+
 class JobsManager(SyncManager):
 	pass
 
 
 def callback_handler(callbacks,shared_result_q,shared_logger_q):
 	print "recieving callbacks"
+	
+	manager=jobs.JobsManager()	
+	db=manager.get_server_db()
+	if str(db)=="None":
+		db=None
 	while True:
 		try:
 			response = shared_result_q.get()
-			default_callback(response,shared_logger_q)		
-			callbacks.process_callback(response)									
+			default_callback(response,shared_logger_q,db)		
+			callbacks.process_callback(response,db)									
 			time.sleep(0.01)
 		except Exception as e:			
 			print "callback_handler:",e
 			traceback.print_exc()
 			break
 
-def default_callback(response,shared_logger_q):
+def default_callback(response,shared_logger_q,db):		
+	if not db is None:
+		db.job_done(response)
 	if response["success"]==False:		
 		shared_logger_q.put_nowait(response)
 
@@ -53,30 +64,36 @@ class CallBacks(object):
 		self.callbacks_dict=callbacks_dict
 		self.shared_job_q=shared_job_q
 	
-	def process_callback(self,response):
+	def process_callback(self,response,db):
 		request = response["request"]				
 		if "response" in request[2]:
 			del request[2]["response"]
 		#test_log(request)
-		str_req = pickle.dumps(request)
+		str_req = pickle.dumps(request)		
+		#print str_req		
 		if str_req in self.callbacks_dict:
 			callback = self.callbacks_dict[str_req]						
 			del self.callbacks_dict[str_req]
 			#if response["success"]==True:			
-						
 			callback[2]["response"]=response
+			row_id=0
+			if not db is None:
+				row_id = db.add_job(callback,[])
+			callback = callback+(row_id,)			
 			self.shared_job_q.put(callback)				
 	
 class ClientProxies:
 
 	def __init__(self):
-		self.job_q = mp.Queue()
+		self.job_q = mp.Queue()		
+		#self.job_q = server_db.Persistant_Queue()		
 		self.result_q = mp.Queue()
 		self.logger_q = mp.Queue()
 		self.pools={}
 		self.callbacks_dict ={}
 		self.sync_data={}
-		self.waiters={}
+		self.waiters={}		
+		self.server_db=None
 #		self.manager=None
 
 	def __get_default_pool_config__(self):
@@ -90,8 +107,19 @@ class ClientProxies:
 
 	def get_logger_q(self):
 		return self.logger_q
+
 	def get_sync_data(self):
 		return self.sync_data
+
+	def get_server_db(self):
+		if self.server_db==None:
+			server_config=config.Server_Config()
+			if int(server_config.get_config("server_db.enabled"))==1:
+				conn_name=server_config.get_config("server_db.path")
+				self.server_db=server_db.Jobs_Persistance(conn_name)
+			else:
+				self.server_db=None
+		return self.server_db
 
 	def get_pool_config(self,id):	
 		#return self.manager==None		
@@ -100,6 +128,7 @@ class ClientProxies:
 			self.pools[id]=DEFAULT_POOL_CONFIG
 		return self.pools
 
+	## Not Used any more(deprecated)
 	def add_job(self,job,callback_list=[]):		
 		if type(job)==tuple:
 			if len(job)==2:
@@ -108,9 +137,9 @@ class ClientProxies:
 				raise Exception("Invalid job !")
 		else:
 			raise Exception("Invalid job !")
-		self.job_q.put(job)				
+		main_job=job
 		
-		job=(job[0],job[1],OrderedDict(sorted(job[2].items())))
+		#job=(job[0],job[1],OrderedDict(sorted(job[2].items())))
 		for callback_job in  callback_list:
 			if type(job)==tuple:				
 				if len(job)==2:
@@ -124,6 +153,7 @@ class ClientProxies:
 					job=callback_job
 			else:
 				raise Exception("Invalid callbacks !")
+		self.job_q.put(main_job)
 
 
 	def get_callbacks_dict(self):
@@ -199,6 +229,7 @@ def make_server_manager(ip,port, authkey):
 	
 	JobsManager.register('delete_waiter',callable=proxies.delete_waiter)	
 	JobsManager.register('add_job',callable=proxies.add_job)
+	JobsManager.register('get_server_db',callable=proxies.get_server_db,exposed=["add_job","job_done","job_queued"])
 					
 	print "Starting server ..."
 	manager.start()	
@@ -209,6 +240,8 @@ def flush_log(str_data,file_name):
 	"""
 	Flush clients logs to disk
 	"""
+	server_config = config.Server_Config()
+	LOG_DIR=server_config.get_config("log_dir")
 	path=os.path.join(LOG_DIR,file_name)	
 	with open(path,"a") as f:
 		f.write(str_data)
@@ -232,9 +265,19 @@ class JobsProducer(object):
 			# for callback_job in  callback_list:
 			# 	self.shared_callbacks_dict[pickle.dumps(req)]=callback_job
 			# 	req=callback_job
+			job_id = self.jobs_persistance.add_job(job,callback_list)
+			job = job + (job_id,)
+			raise Exception("job_id="+str(job_id))
 			self.manager.add_job(job,callback_list)
 
 	def run(self):
+
+		##---------------------------------------------------------------------##
+		server_config=config.Server_Config()
+
+		AUTHKEY = server_config.get_config("authkey")
+		PORTNUM = int(server_config.get_config("portnum"))
+		IP 		= server_config.get_config("ip")
 		manager = make_server_manager(IP,PORTNUM, AUTHKEY)
 		
 		self.manager=manager
@@ -242,7 +285,10 @@ class JobsProducer(object):
 		self.shared_result_q = manager.get_result_q()	
 		self.shared_logger_q = manager.get_logger_q()
 		self.shared_callbacks_dict = manager.get_callbacks_dict()
-
+		db=manager.get_server_db()
+		if not db is None:
+			print "tested job db connection"
+		#db.add_job(("server_test","execute_test",{"value":1}),["callback"])
 		##--------------------------------------------------------------##
 		print "starting logs sink"
 		self.logs_sink_process = mp.Process(
@@ -251,9 +297,11 @@ class JobsProducer(object):
 					#args=(shared_job_q, status,flag_terminate))		
 		self.logs_sink_process.start()
 		##--------------------------------------------------------------##
+		
+
 
 		##--------------------------------------------------------------##
-		print "starting callback reciever"
+		print "starting callback receiver"
 		
 		self.callbacks=CallBacks(self.shared_job_q, self.shared_callbacks_dict)
 		
@@ -295,7 +343,7 @@ class JobsProducer(object):
 
 def logs_sink(shared_logger_q):
 	"""
-	Function used to recieve logs from clients, this function is assigned to log sink process
+	Function used to receive logs from clients, this function is assigned to log sink process
 	"""
 	print "started logs sink"
 	#print sys.executable
@@ -308,7 +356,7 @@ def logs_sink(shared_logger_q):
 		try:
 			log=shared_logger_q.get_nowait()			
 			try:	
-				print log			
+				#print log			
 				log_time=datetime.now()
 				str_log=json.dumps(log)
 				str_log=str_log.replace("\n","")
@@ -343,11 +391,15 @@ if __name__ == '__main__':
  	#producer.add_job(("test_module","squar_it",{"ip":3}))	
  	#producer.add_job(("test_module","squar_it",{"ip":4}))	
  	print "Default Python Interpreter: ", sys.executable
- 	time.sleep(1)
+ 	time.sleep(2)
  	print "-"*60
  	print "\n"
+ 	#print os.getpid()
  	while True: 		
- 		print "jobs=%d\tcallbacks=%d" % (producer.shared_job_q.qsize(),len(producer.shared_callbacks_dict))
+ 		sys.stdout.write("jobs=%d\tcallbacks=%d \r" % (producer.shared_job_q.qsize(),len(producer.shared_callbacks_dict)))
+		sys.stdout.flush()
+ 		#print "jobs=%d\tcallbacks=%d \r" % (producer.shared_job_q.qsize(),len(producer.shared_callbacks_dict))
+ 		sys.stdout.flush()
 		#TODO: Command line changes
 		time.sleep(1) 		
 	producer.shutdown()
