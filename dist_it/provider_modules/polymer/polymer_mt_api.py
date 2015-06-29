@@ -706,20 +706,23 @@ def get_to_cities(process_id,from_city_response):
 		raise provider_exceptions.Config_Load_Exc(api.loading_error)
 
 	# Get from city list from response to process to city for each from city_pairs
-	if from_city_response["NewDataSet"]["Table"] is None:
+	if not "NewDataSet" in from_city_response or not "Table" in from_city_response["NewDataSet"] or from_city_response["NewDataSet"]["Table"] is None:
 		raise Exception("No result from get from cities")
 
 	try:
 		for city in from_city_response["NewDataSet"]["Table"]:#from_city_list:
 			# Pulling To Cities from API
+			response=None
 			try:
 				response=api.pull_to_cities(city["SourceId"])
 			except Exception, ex:
-				raise provider_exceptions.Pull_Exc(str(ex))
+				# raise provider_exceptions.Pull_Exc(str(ex))
+				pass
 			
 			# Push pulled to citeis into pulldb
 			try:
-				api.process_to_cities(process_id,city["SourceId"],city["Source"],response)
+				if response!=None:
+					api.process_to_cities(process_id,city["SourceId"],city["Source"],response)
 			except Exception, ex:
 				raise provider_exceptions.Process_Exc(str(ex))
 		return True
@@ -754,7 +757,7 @@ def get_routes(process_id,from_city_id,from_city_name,to_city_id,to_city_name,jo
 	except Exception, ex:
 		raise provider_exceptions.Pull_Exc(str(ex))
 	# Process routes
-	print "got response"
+	# print "got response"
 	try:
 		return api.process_routes(process_id,from_city_name,to_city_name,journey_date,response)
 	except Exception, ex:
@@ -836,8 +839,8 @@ def get_response(str_api_name,*args,**kwrds):
 		raise Exception("No Such API Method !")
 
 if __name__== "__main__":
-	import json
-	api = PolymerMT_API(DEFAULT_SECTION)
+	# import json
+	# api = PolymerMT_API(DEFAULT_SECTION)
 	# print api.pull_from_cities()
 	# print xmltodict.parse(api.pull_from_cities())
 	# print json.dumps(xmltodict.parse(api.pull_from_cities()),indent=4)
@@ -847,7 +850,7 @@ if __name__== "__main__":
 	# print json.dumps(api.process_to_cities(0,"167","VIRUTHACHALAM",api.pull_to_cities("167")),indent=4)
 	# print json.dumps(api.process_to_cities(0,"1","asd",api.pull_to_cities("1")),indent=4)
 	# print api.pull_routes("12","11","2015-04-05")
-	print json.dumps(xmltodict.parse(api.pull_routes("11","12","2015-05-13")),indent=4)
+	# print json.dumps(xmltodict.parse(api.pull_routes("11","12","2015-05-13")),indent=4)
 	# print json.dumps(api.process_routes(0,"Coimbatore","Bangalore","2015-04-05",api.pull_routes("12","11","2015-04-05")),indent=4)
 	# print json.dumps(api.process_routes(0,"Bangalore","Trivandram","2015-02-15",api.pull_routes("56","172","2015-02-15")),indent=4)
 	# print json.dumps(api.process_routes(0,"Bangalore","Chennai","2015-02-15",api.pull_routes("56","44","2015-02-15")),indent=4)

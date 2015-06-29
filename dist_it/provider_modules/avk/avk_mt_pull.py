@@ -7,7 +7,7 @@ from datetime import datetime,timedelta
 from helpers import jobs,util_fun
 # import httplib2,json,urllib,xmltodict,re,time,os  
 # AvkMT_Pull configuration
-NO_DAYS_TO_PULL=3
+NO_DAYS_TO_PULL=30
 NAME ="AvkMT_Pull"
 PROVIDER_ID=66
 
