@@ -537,6 +537,9 @@ def test_me():
 	print "Done"
 
 if __name__== "__main__":
+	import json
+	api = Parveen_API(DEFAULT_SECTION)
+	print json.dumps(api.pull_stations(), indent=4)
 	#print 
 	#print get_stations(3)	
 	#print get_city_pairs_to_pull(12)
@@ -564,6 +567,6 @@ if __name__== "__main__":
 
 	#get_to_cities(14,"Bangalore",42)
 	#a=Parveen_API("dev")
-	print process_data(46249871)
+	# print process_data(46249871)
 	#print __file__
 	pass

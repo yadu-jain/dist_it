@@ -122,7 +122,7 @@ if __name__=='__main__':
 	curr_secondary_counter=datetime.now().day % SECONDARY_BULK_COUNT
 	jd_from=jd_to+timedelta(days=1+SECONDARY_BULK_SIZE*curr_secondary_counter)
 	jd_to=jd_from+timedelta(days=SECONDARY_BULK_SIZE-1)	
-	print "Phase-1: From=%s, To=%s" % (jd_from.strftime("%Y-%m-%d"),jd_to.strftime("%Y-%m-%d"))	
+	print "Phase-2: From=%s, To=%s" % (jd_from.strftime("%Y-%m-%d"),jd_to.strftime("%Y-%m-%d"))	
 	process_id = util_fun.get_process_id(PROVIDER_ID)	
 	print "PROCESS_ID=%d" % (process_id,)
 	start_pull(process_id,jd_from,jd_to)	
